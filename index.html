@@ -125,11 +125,11 @@
             <h2>Add Medical Data</h2>
             
             <div class="tabs">
-                <div class="tab active" data-tab="hospital">Hospital Visit</div>
-                <div class="tab" data-tab="medication">Medications</div>
-                <div class="tab" data-tab="tests">Test Results</div>
-                <div class="tab" data-tab="surgery">Surgeries</div>
-                <div class="tab" data-tab="allergy">Allergies</div>
+                <div class="tab active" onclick="switchTab('hospital')">Hospital Visit</div>
+                <div class="tab" onclick="switchTab('medication')">Medications</div>
+                <div class="tab" onclick="switchTab('tests')">Test Results</div>
+                <div class="tab" onclick="switchTab('surgery')">Surgeries</div>
+                <div class="tab" onclick="switchTab('allergy')">Allergies</div>
             </div>
 
             <!-- Hospital Visit Tab -->
@@ -146,7 +146,7 @@
                     </div>
                     <div class="form-group">
                         <label>Visit Date</label>
-                        <input type="date" id="visit-date" value="<?php echo date('Y-m-d'); ?>">
+                        <input type="date" id="visit-date">
                     </div>
                     <div class="form-group">
                         <label>Diagnosis/Condition</label>
@@ -214,7 +214,7 @@
                     </div>
                     <div class="form-group">
                         <label>Test Date</label>
-                        <input type="date" id="test-date" value="<?php echo date('Y-m-d'); ?>">
+                        <input type="date" id="test-date">
                     </div>
                     <div class="form-group">
                         <label>Test Results</label>
@@ -397,15 +397,31 @@
     </section>
 
     <script>
-        // Initialize tabs
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(this.getAttribute('data-tab') + '-tab').classList.add('active');
+        // Tab switching function - FIXED
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
             });
-        });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Set today's date as default for date fields
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('visit-date').value = today;
+            document.getElementById('test-date').value = today;
+        };
 
         // Database functions
         function getDatabase() {
@@ -436,6 +452,11 @@
                 return;
             }
             
+            if (!name) {
+                alert('Please enter patient name');
+                return;
+            }
+            
             const db = getDatabase();
             db.patients[aadhaar] = {
                 name: name,
@@ -460,6 +481,11 @@
             const visitDate = document.getElementById('visit-date').value;
             const diagnosis = document.getElementById('diagnosis').value;
             const notes = document.getElementById('doctor-notes').value;
+            
+            if (!aadhaar || !hospital) {
+                alert('Please fill all required fields');
+                return;
+            }
             
             const db = getDatabase();
             if (!db.hospitalVisits[aadhaar]) {
@@ -494,6 +520,11 @@
             const endDate = document.getElementById('med-end-date').value;
             const frequency = document.getElementById('med-frequency').value;
             const doctor = document.getElementById('med-doctor').value;
+            
+            if (!aadhaar || !name || !dosage) {
+                alert('Please fill all required fields');
+                return;
+            }
             
             const db = getDatabase();
             if (!db.medications[aadhaar]) {
@@ -532,6 +563,11 @@
             const normalRange = document.getElementById('test-normal-range').value;
             const lab = document.getElementById('test-lab').value;
             
+            if (!aadhaar || !testName) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
             const db = getDatabase();
             if (!db.testResults[aadhaar]) {
                 db.testResults[aadhaar] = [];
@@ -567,6 +603,11 @@
             const surgeon = document.getElementById('surgery-surgeon').value;
             const notes = document.getElementById('surgery-notes').value;
             
+            if (!aadhaar || !surgeryName) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
             const db = getDatabase();
             if (!db.surgeries[aadhaar]) {
                 db.surgeries[aadhaar] = [];
@@ -601,6 +642,11 @@
             const symptoms = document.getElementById('allergy-symptoms').value;
             const allergyDate = document.getElementById('allergy-date').value;
             
+            if (!aadhaar || !allergyName) {
+                alert('Please fill all required fields');
+                return;
+            }
+            
             const db = getDatabase();
             if (!db.allergies[aadhaar]) {
                 db.allergies[aadhaar] = [];
@@ -628,6 +674,11 @@
         // Save Emergency Contacts
         function saveEmergencyContacts() {
             const aadhaar = document.getElementById('emergency-aadhaar').value;
+            
+            if (!aadhaar) {
+                alert('Please enter Aadhaar number');
+                return;
+            }
             
             const db = getDatabase();
             db.emergencyContacts[aadhaar] = {
@@ -677,6 +728,11 @@
             const db = getDatabase();
             const display = document.getElementById('records-display');
             
+            if (!aadhaar) {
+                alert('Please enter Aadhaar number');
+                return;
+            }
+            
             if (!db.patients[aadhaar]) {
                 display.innerHTML = '<p style="color: red;">No patient found with this Aadhaar number.</p>';
                 return;
@@ -692,12 +748,12 @@
                 html += `
                     <div class="emergency-section">
                         <h4>🚨 Emergency Contacts</h4>
-                        <div class="form-row">
-                            <div class="contact-item">
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div class="contact-item" style="flex: 1; min-width: 200px;">
                                 <strong>${emergency.contact1.name}</strong> (${emergency.contact1.relationship})<br>
                                 📞 ${emergency.contact1.phone} ${emergency.contact1.altPhone ? '| ' + emergency.contact1.altPhone : ''}
                             </div>
-                            <div class="contact-item">
+                            <div class="contact-item" style="flex: 1; min-width: 200px;">
                                 <strong>${emergency.contact2.name}</strong> (${emergency.contact2.relationship})<br>
                                 📞 ${emergency.contact2.phone} ${emergency.contact2.altPhone ? '| ' + emergency.contact2.altPhone : ''}
                             </div>
@@ -715,9 +771,14 @@
             if (db.allergies[aadhaar] && db.allergies[aadhaar].length > 0) {
                 html += `<h4>⚠️ Allergies & Adverse Reactions</h4>`;
                 db.allergies[aadhaar].forEach(allergy => {
+                    const badgeColor = allergy.severity === 'Life-threatening' ? 'var(--danger)' : 
+                                     allergy.severity === 'Severe' ? 'var(--warning)' : 'var(--primary)';
                     html += `
-                        <div class="record-card" style="border-left-color: var(--warning);">
-                            <strong>${allergy.allergyName}</strong> <span class="emergency-badge">${allergy.severity}</span><br>
+                        <div class="record-card" style="border-left-color: ${badgeColor};">
+                            <strong>${allergy.allergyName}</strong> 
+                            <span style="background: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-left: 10px;">
+                                ${allergy.severity}
+                            </span><br>
                             <span>Symptoms: ${allergy.symptoms}</span><br>
                             <span>Identified: ${allergy.identifiedDate}</span>
                         </div>
@@ -754,62 +815,3 @@
                             <span>Frequency: ${med.frequency}</span><br>
                             <span>Prescribed by: ${med.prescribingDoctor}</span>
                         </div>
-                    `;
-                });
-            }
-            
-            // Test Results
-            if (db.testResults[aadhaar] && db.testResults[aadhaar].length > 0) {
-                html += `<h4>🩸 Test Results</h4>`;
-                db.testResults[aadhaar].forEach(test => {
-                    html += `
-                        <div class="test-item">
-                            <strong>${test.testName}</strong><br>
-                            <span>Test Date: ${test.testDate}</span><br>
-                            <span>Results: ${test.results}</span><br>
-                            <span>Normal Range: ${test.normalRange}</span><br>
-                            <span>Lab: ${test.lab}</span>
-                        </div>
-                    `;
-                });
-            }
-            
-            // Surgeries
-            if (db.surgeries[aadhaar] && db.surgeries[aadhaar].length > 0) {
-                html += `<h4>🔪 Surgeries & Procedures</h4>`;
-                db.surgeries[aadhaar].forEach(surgery => {
-                    html += `
-                        <div class="record-card">
-                            <div class="record-header">
-                                <strong>${surgery.surgeryName}</strong>
-                                <span class="record-date">Surgery Date: ${surgery.surgeryDate}</span>
-                            </div>
-                            <p><strong>Hospital:</strong> ${surgery.hospital}</p>
-                            <p><strong>Surgeon:</strong> ${surgery.surgeon}</p>
-                            <p><strong>Notes:</strong> ${surgery.notes}</p>
-                        </div>
-                    `;
-                });
-            }
-            
-            if (!db.hospitalVisits[aadhaar] && !db.medications[aadhaar] && !db.testResults[aadhaar] && !db.surgeries[aadhaar] && !db.allergies[aadhaar] && !db.emergencyContacts[aadhaar]) {
-                html += '<p>No medical records found for this patient.</p>';
-            }
-            
-            display.innerHTML = html;
-        }
-
-        // Emergency Access View
-        function viewEmergencyCard() {
-            const aadhaar = document.getElementById('view-aadhaar').value;
-            const db = getDatabase();
-            const display = document.getElementById('records-display');
-            
-            if (!db.patients[aadhaar]) {
-                display.innerHTML = '<p style="color: red;">No patient found with this Aadhaar number.</p>';
-                return;
-            }
-            
-            const patient = db.patients[aadhaar];
-            let html = `
-                <div class="emergency-section" style="background: #f8d7da
